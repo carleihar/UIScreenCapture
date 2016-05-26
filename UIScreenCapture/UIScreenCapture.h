@@ -28,6 +28,7 @@ typedef void(^UIScreenCaptureCompletion)(NSURL *fileURL);
 
 - (void)createVideoFromImageURLs:(NSArray *)urls withCompletion:(UIScreenCaptureCompletion)completion;
 - (void)createVideoFromImages:(NSArray *)images withCompletion:(UIScreenCaptureCompletion)completion;
+- (void)createVideoFromImage:(UIImage *)image withCompletion:(UIScreenCaptureCompletion)completion withPresentationTime:(CMTime)presentationTime;
 
 - (void)startRecording;
 - (void)stopRecording;

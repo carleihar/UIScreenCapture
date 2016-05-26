@@ -85,6 +85,65 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
     } withCompletion:completion];
 }
 
+- (void)createVideoFromImage:(UIImage *)image withCompletion:(UIScreenCaptureCompletion)completion withPresentationTime:(CMTime)presentationTime
+{
+    
+    [self prepareCapture];
+    
+    self.completionBlock = completion;
+    
+    [self.assetWriter startWriting];
+    [self.assetWriter startSessionAtSourceTime:kCMTimeZero];
+    
+    dispatch_queue_t mediaInputQueue = dispatch_queue_create("mediaInputQueue", NULL);
+    
+    __block NSInteger i = 0;
+    
+    NSInteger frameNumber = 1;
+    
+    [self.writerInput requestMediaDataWhenReadyOnQueue:mediaInputQueue usingBlock:^{
+        while (YES){
+            if (i >= frameNumber) {
+                break;
+            }
+            
+            @autoreleasepool {
+                if ([self.writerInput isReadyForMoreMediaData]) {
+                    UIImage *img = image;
+                    if (img == nil) {
+                        i++;
+                        NSLog(@"Warning: could not extract one of the frames");
+                        continue;
+                    }
+                    CVPixelBufferRef sampleBuffer = [self newPixelBufferFromCGImage:[img CGImage]];
+                    
+                    if (sampleBuffer) {
+                        if (i == 0) {
+                            [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:kCMTimeZero];
+                        }
+                        else {
+                            CMTime lastTime = CMTimeMake(i-1, self.frameTime.timescale);
+                            CMTime presentTime = CMTimeAdd(lastTime, self.frameTime);
+                            [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:presentTime];
+                        }
+                        CFRelease(sampleBuffer);
+                        i++;
+                    }
+                }
+            }
+        }
+        
+        [self.writerInput markAsFinished];
+        [self.assetWriter finishWritingWithCompletionHandler:^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.completionBlock(self.fileURL);
+            });
+        }];
+        
+        CVPixelBufferPoolRelease(self.bufferAdapter.pixelBufferPool);
+    }];
+}
+
 - (void)createVideoFromSource:(NSArray *)images extractor:(UIScreenCaptureUIImageExtractor)extractor withCompletion:(UIScreenCaptureCompletion)completion;
 {
     
