@@ -116,16 +116,8 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
                         continue;
                     }
                     CVPixelBufferRef sampleBuffer = [self newPixelBufferFromCGImage:[img CGImage]];
-                    
                     if (sampleBuffer) {
-                        if (i == 0) {
-                            [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:kCMTimeZero];
-                        }
-                        else {
-                            CMTime lastTime = CMTimeMake(i-1, self.frameTime.timescale);
-                            CMTime presentTime = CMTimeAdd(lastTime, self.frameTime);
-                            [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:presentTime];
-                        }
+                        [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:presentationTime];
                         CFRelease(sampleBuffer);
                         i++;
                     }
