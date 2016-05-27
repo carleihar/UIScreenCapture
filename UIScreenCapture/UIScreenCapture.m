@@ -99,7 +99,7 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
     
     __block NSInteger i = 0;
     
-    NSInteger frameNumber = 1;
+    CGFloat frameNumber = CMTimeGetSeconds(presentationTime) * self.frameTime.timescale;
     
     [self.writerInput requestMediaDataWhenReadyOnQueue:mediaInputQueue usingBlock:^{
         while (YES){
@@ -116,8 +116,16 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
                         continue;
                     }
                     CVPixelBufferRef sampleBuffer = [self newPixelBufferFromCGImage:[img CGImage]];
+                    
                     if (sampleBuffer) {
-                        [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:presentationTime];
+                        if (i == 0) {
+                            [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:kCMTimeZero];
+                        }
+                        else {
+                            CMTime lastTime = CMTimeMake(i-1, self.frameTime.timescale);
+                            CMTime presentTime = CMTimeAdd(lastTime, self.frameTime);
+                            [self.bufferAdapter appendPixelBuffer:sampleBuffer withPresentationTime:presentTime];
+                        }
                         CFRelease(sampleBuffer);
                         i++;
                     }
