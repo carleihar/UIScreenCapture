@@ -13,6 +13,7 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
 @interface UIScreenCapture ()
 
 @property BOOL recording;
+@property (strong, nonatomic) NSMutableArray *exportNames;
 
 @end
 
@@ -22,14 +23,16 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
 {
     self = [super init];
     if (self) {
-        
         CGRect screenRect = [[UIScreen mainScreen] bounds];
         self.width = screenRect.size.width;
         self.height = screenRect.size.height;
         self.frameRate = 30.0;
+        self.exportNames = [NSMutableArray new];
     }
     return self;
 }
+
+
 
 - (void)prepareCapture
 {
@@ -37,8 +40,12 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
     
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths firstObject];
-    NSString *tempPath = [documentsDirectory stringByAppendingFormat:@"/export.mov"];
     
+    NSString *fileName = [self randomFileName];
+    
+    NSString *tempPath = [documentsDirectory stringByAppendingString:[NSString stringWithFormat:@"/%@.mov", fileName]];
+    
+//    NSString *tempPath = [documentsDirectory stringByAppendingFormat:[NSString stringWithFormat:@"/%@.mov", fileName]];
     
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
         [[NSFileManager defaultManager] removeItemAtPath:tempPath error:&error];
@@ -450,6 +457,33 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
         }
     }
     return keyWindow;
+}
+
+#pragma  mark - Helpers
+
+- (NSString *)randomFileName {
+    BOOL notTaken = NO;
+    NSString *randomString;
+    NSLog(@"export names: %@", self.exportNames);
+    while (!notTaken) {
+        randomString = [self randomStringWithLength:15];
+        NSLog(@"random sring: %@", randomString);
+        if (![self.exportNames containsObject:randomString]) {
+            notTaken = YES;
+        }
+    }
+    [self.exportNames addObject:randomString];
+    return randomString;
+}
+
+- (NSString *)randomStringWithLength:(int)len {
+    NSString *letters = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    NSMutableString *randomString = [NSMutableString stringWithCapacity:len];
+    
+    for (int i = 0; i < len; i++) {
+        [randomString appendFormat: @"%C", [letters characterAtIndex: arc4random_uniform((int)[letters length])]];
+    }
+    return randomString;
 }
 
 @end
