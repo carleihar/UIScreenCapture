@@ -45,8 +45,6 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
     
     NSString *tempPath = [documentsDirectory stringByAppendingString:[NSString stringWithFormat:@"/%@.mov", fileName]];
     
-//    NSString *tempPath = [documentsDirectory stringByAppendingFormat:[NSString stringWithFormat:@"/%@.mov", fileName]];
-    
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
         [[NSFileManager defaultManager] removeItemAtPath:tempPath error:&error];
         if (error) {
@@ -464,10 +462,8 @@ typedef UIImage *(^UIScreenCaptureUIImageExtractor)(NSObject* inputObject);
 - (NSString *)randomFileName {
     BOOL notTaken = NO;
     NSString *randomString;
-    NSLog(@"export names: %@", self.exportNames);
     while (!notTaken) {
         randomString = [self randomStringWithLength:15];
-        NSLog(@"random sring: %@", randomString);
         if (![self.exportNames containsObject:randomString]) {
             notTaken = YES;
         }
